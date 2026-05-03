@@ -2,7 +2,17 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 
-const AuthContext = createContext({ user: null as User | null, login: async () => {}, logout: async () => {} });
+type AuthContextValue = {
+  user: User | null;
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue>({
+  user: null,
+  login: async () => {},
+  logout: async () => {},
+});
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -10,8 +20,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
+  const login = async () => {
+    await signInWithPopup(auth, googleProvider);
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login: () => signInWithPopup(auth, googleProvider), logout: () => signOut(auth) }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
